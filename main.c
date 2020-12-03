@@ -6,6 +6,19 @@
 int w = 600, h = 600;
 double rx = 0, ry = 0, rz = 0, px = 0, py = 0, pz = 0;
 
+void setMaterial(GLfloat ambientR,GLfloat ambientG,GLfloat ambientB,
+                 GLfloat diffuseR,GLfloat diffuseG,GLfloat diffuseB,
+                 GLfloat specularR,GLfloat specularG,GLfloat specularB, GLfloat shininess){
+    
+    GLfloat ambient[] = { ambientR, ambientG, ambientB };
+    GLfloat diffuse[] = { diffuseR, diffuseG, diffuseB };
+    GLfloat specular[] = { specularR, specularG, specularB };
+    glMaterialfv(GL_FRONT_AND_BACK,GL_AMBIENT,ambient);
+    glMaterialfv(GL_FRONT_AND_BACK,GL_DIFFUSE,diffuse);
+    glMaterialfv(GL_FRONT_AND_BACK,GL_SPECULAR,specular);
+    glMaterialf(GL_FRONT_AND_BACK,GL_SHININESS,shininess);
+}
+
 void reshape(int width, int height) {
     glMatrixMode(GL_PROJECTION);
     glLoadIdentity();
@@ -26,22 +39,6 @@ void display(void){
     glLoadIdentity();
     gluLookAt(-10+rx,9+ry,-10+rz,px,py,pz,0,1,0);
     glPushMatrix();
-
-    /*for(float i=-100;i<100;i+=1.1){
-        glColor3f(1.0f,1.0f,1.0f);
-        glBegin(GL_LINE_STRIP);
-        glVertex3f(i,0,-100);
-        glVertex3f(i,0,100);
-        glEnd();
-    }
-
-    for(float i=-100;i<100;i+=1.1){
-        glColor3f(1.0f,1.0f,1.0f);
-        glBegin(GL_LINE_STRIP);
-        glVertex3f(-100,0,i);
-        glVertex3f(100,0,i);
-        glEnd();
-    }*/
 
     //ejes
     //y
@@ -64,15 +61,26 @@ void display(void){
     glEnd();
 
     //objetos
-    glColor3f(1,0,0);
-    glutSolidTeapot(1.7f);
-    /*glTranslatef(7,1,0);
-    glutSolidTeapot(1);
-    glTranslatef(15,0,9);
-    glutSolidTeapot(1);
-    glTranslatef(-10,0,5);
-    glutSolidTeapot(1);*/
+    glViewport(0,0,h,w);
+    glPushMatrix();
+    setMaterial(0,0.1,0,0.1,0.1,0.1,0.0,0.9,0.0,1);
+    glutSolidSphere(1,20,20);
     glPopMatrix();
+
+    glPushMatrix();
+    setMaterial(0.1,0,0,0.1,0.1,0.1,0.9,0.0,0.0,1);
+    glTranslated(2,0,0);
+    glutSolidCube(1);
+    glPopMatrix();
+
+    glPushMatrix();
+    setMaterial(0,0,0,0.1,0.1,0.1,0.5,0.5,0.5,1);
+    glTranslated(0,0,2);
+    glutSolidTeapot(1);
+    glPopMatrix();
+
+    glPopMatrix();
+    glPushMatrix();
     glutSwapBuffers();
 }
 
@@ -167,35 +175,31 @@ int main(int argc, char **argv){
     glutKeyboardFunc(teclado);
     glutSpecialFunc(flechas);
     glutReshapeFunc(reshape);
-    // Fondo gris
-    glClearColor(0.2, 0.2, 0.2, 1.0);
-    // Una fuente de luz para poder ver bien el modelo
+
+    //Color de fondo
+    glClearColor(0.125,0.69,0.67, 1.0);
+
+    //Codigo de iluminación general
+
+    GLfloat light_ambient[] = {0.0,0.0,0.0,1.0};
+    GLfloat light_specular[] = {1.0,1.0,1.0,1.0};
+    GLfloat light_diffuse[] = {1.0,1.0,1.0,1.0};
+    GLfloat light_position[] = {1.0,1.0,1.0,1.0};
+
     glEnable(GL_LIGHTING);
+    glLightModelfv(GL_LIGHT_MODEL_AMBIENT,light_ambient);
     glEnable(GL_LIGHT0);
-    glEnable(GL_LIGHT1);
-    // Atenuación de especular Ks ... sin atenuar es decir maxima reflexión especular
-    GLfloat light0_specular[] = { 1.0, 1.0, 1.0, 1.0 };
-    // Color de la luz ambiente
-    GLfloat light0_ambient[] = { 0.8, 0.0, 0.0, 1.0 };
-    // Color que difumina el objeto
-    GLfloat light0_diffuse[] = { 0.9, 0.9, 0.0, 1.0 };
+    glLightfv(GL_LIGHT0,GL_AMBIENT,light_ambient);
+    glLightfv(GL_LIGHT0,GL_DIFFUSE,light_diffuse);
+    glLightfv(GL_LIGHT0,GL_SPECULAR,light_specular);
+    glLightfv(GL_LIGHT0,GL_POSITION,light_position);
 
-    glLightfv(GL_LIGHT0, GL_AMBIENT, light0_ambient);
-    glLightfv(GL_LIGHT0, GL_DIFFUSE, light0_diffuse);
-    glMaterialfv(GL_FRONT_AND_BACK, GL_SPECULAR, light0_specular);
-    glMateriali(GL_FRONT_AND_BACK, GL_SHININESS, 90);
+    glMatrixMode(GL_PROJECTION);
+    glLoadIdentity();
+    gluPerspective(40,1,4,20);
+    glMatrixMode(GL_MODELVIEW);
+    glLoadIdentity();
+    gluLookAt(5.0,5.0,5.0,0.0,0.0,0.0,0.0,1.0,0.0);
 
-    // Foco direccional
-    GLfloat light1_direction[] = { 10.0, 5.0, 5.0 };
-    GLfloat light1_diffuse[] = { 0.0, 0.8, 0.0 };
-    glLightfv(GL_LIGHT1, GL_SPOT_DIRECTION, light1_direction);
-    glLightf(GL_LIGHT1, GL_SPOT_EXPONENT, 9.0);
-    glLightfv(GL_LIGHT1, GL_DIFFUSE, light1_diffuse);
-
-    glEnable(GL_DEPTH_TEST);
-    /* posición y orientación */
-    gluLookAt(0.0, 0.0, 10.0, /* eye point */
-        0.0, 0.0, 0.0,  /* punto de referencia */
-        0.0, 1.0, 0.0); /* vector que indica arriba, en este caso Y */
     glutMainLoop();
 }
